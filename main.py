@@ -1,5 +1,5 @@
 import function_UI
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMainWindow
 import sys
 
 
