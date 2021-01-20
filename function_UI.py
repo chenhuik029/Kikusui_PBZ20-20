@@ -31,7 +31,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
             self.comboBox_list_instrument.addItems(["Testing", "Testing 2"])
 
     def scan_equipment_list(self):
-        pass
+        print("HEllo")
 
 
 class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
