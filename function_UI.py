@@ -49,7 +49,6 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
     def navigate_back(self):
         self.close()
         self.main_ui = MainUI()
-        self.main_ui.equipment_list_address()
         self.main_ui.show()
 
     def on_off_click(self):
