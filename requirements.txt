@@ -7,6 +7,7 @@ PyQt5-stubs==5.14.2.2
 pyqt5-tools==5.15.2.3.0.1
 python-dotenv==0.15.0
 PyVISA==1.11.3
+PyVISA-py==0.5.1
 qt5-applications==5.15.2.2.1
 qt5-tools==5.15.2.1.0.1
 typing-extensions==3.7.4.3

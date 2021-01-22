@@ -4,7 +4,6 @@ from UIpy import Main_UI, CV_Console_UI
 from function_msgbox import msg_box_ok, msg_box_auto_close, msg_box_ok_cancel
 from Instrument_PyVisa import Basic_PyVisa
 import sys
-import time
 
 
 # Main UI
@@ -18,7 +17,6 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         self.combobox_equipment_list()
         self.actionExit.triggered.connect(self.close_app)
         self.pushButton_CV_mode.clicked.connect(self.goto_cv_console_mode)
-
         self.equipment_list = []
 
     def close_app(self):
@@ -62,4 +60,3 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
 
     def on_off_click(self):
         pass
-
