@@ -1,6 +1,7 @@
 import pyvisa
 
 
+# All the basic PyVISA command should be placed here.
 class Basic_PyVisa:
     def __init__(self):
         self.rm = pyvisa.ResourceManager()
@@ -12,11 +13,16 @@ class Basic_PyVisa:
         try:
             self.rm.open_resource(target_resource_instr)
             return True
-        except pyvisa.VisaIOError as error:
-            print(error.args)
-            print(f'{target_resource_instr} is busy/ not available')
+
+        except ValueError as error:
+            print(error)
+            # return False
+            return True
 
 
+if __name__ == "__main__":
+    rm = Basic_PyVisa()
+    rm.connect_device('USB0::0x0B3E::0x1012::XF001773::0::INSTR')
 
 
 
