@@ -25,7 +25,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         self.led_widget.setFixedSize(25, 25)
         self.horizontalLayout_4.addWidget(self.led_widget)
 
-        self.pyvisa = Kikusui_PyVisa.Kikusui_PyVisa()
+        self.instrument = Kikusui_PyVisa.Kikusui_features()
 
         # Print out scanned equipment
         self.combobox_equipment_list()
@@ -71,10 +71,10 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Scan connected equipment
     def scan_equipment_list(self):
-        self.equipment_list = self.pyvisa.list_connected_devices()
+        # self.equipment_list = self.instrument.list_connected_devices()
 
         # To be deleted when actual instrument was used.
-        # self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
+        self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
 
     # Check selected equipment
     def check_selected_equipment(self):
@@ -88,8 +88,8 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Connect to selected equipment
     def connect_equipment(self):
         self.selected_equipment = self.comboBox_list_instrument.currentText()
-        status=True
-        # status = self.pyvisa.connect_device(self.selected_equipment)
+        status = True
+        # status = self.instrument.connect_equipment(self.selected_equipment)
         if status is False:
             msg_box_ok(f'ERROR 001:\n\n{self.selected_equipment} is busy\n'
                        f'OR not available\n'
@@ -105,9 +105,11 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
         self.read_thread = Thread(target=self.read_output)
-        self.pyvisa = Kikusui_PyVisa.Kikusui_PyVisa()
+        self.instrument = Kikusui_PyVisa.Kikusui_features()
         self.selected_equipment = selected_equipment
         self.setupUi(self)
+
+        # Sent event triggered
         self.actionExit.triggered.connect(self.close_app)
         self.actionBack.triggered.connect(self.navigate_back)
         self.pushButton_ONOFF.clicked.connect(self.on_off_click)
@@ -117,26 +119,34 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.led_widget.setFixedSize(25, 25)
         self.horizontalLayout_6.addWidget(self.led_widget)
 
+        # Add combo box list
+        self.comboBox.addItems(["UNIPolar", "BIPolar"])
+        self.comboBox.setCurrentIndex(0)
+
+        # Define add variables
+        self.polarity = ""
         self.set_OV_int = ""
         self.set_OV_dec = ""
         self.set_OV_lim_int = ""
         self.set_OV_lim_dec = ""
         self.set_cur_lim_int = ""
         self.set_cur_lim_dec = ""
+        self.vout_read = 0
+        self.iout_read = 0
         self.status_on_off = False
         self.read_output_stat = False
 
     def close_app(self):
         # close thread for read output voltage
         self.read_output_stat = False
-
+        self.instrument.on_off_equipment(0)
         msg_box_auto_close("Closing Program")
         self.close()
 
     def navigate_back(self):
         # close thread for read output voltage
         self.read_output_stat = False
-
+        self.instrument.on_off_equipment(0)
         self.close()
         self.main_ui = MainUI()
         self.main_ui.show()
@@ -149,11 +159,14 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
             self.read_user_input()
             self.read_thread = Thread(target=self.read_output)
 
+            # Check output is > limit set
             if self.set_output_vol >= self.set_output_vol_limit:
                 msg_box_ok("Error 002:\n"
                            "Output Voltage Limit must be larger than set Output Voltage!")
 
             else:
+                # Disable control
+                self.comboBox.setDisabled(True)
                 self.spinBox_OV_Lim.setDisabled(True)
                 self.doubleSpinBox_OV_Lim.setDisabled(True)
                 self.spinBox_Cur_Lim.setDisabled(True)
@@ -168,25 +181,25 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
                 # Turn On output of the Equipment
                 self.led_widget.turn_on()
                 self.status_on_off = True
-                self.pyvisa.connect_device(self.selected_equipment)
-                self.pyvisa.set_mode("CV")
-                self.pyvisa.set_polarity("BIP")
-                self.pyvisa.set_output_voltage(self.set_output_vol)
-                self.pyvisa.set_voltage_limit(self.set_output_vol_limit)
-                self.pyvisa.set_current_limit(self.set_cur_limit)
-                self.pyvisa.turn_on_output(1)
+                self.instrument.connect_equipment(self.selected_equipment)
+                self.instrument.set_unipolar_cv_output("CV", self.polarity, self.set_output_vol, self.set_output_vol_limit, self.set_cur_limit)
+                self.instrument.on_off_equipment(1)
 
         # Turn OFF
         else:
+            # Enable control
+            self.comboBox.setDisabled(False)
             self.spinBox_OV_Lim.setDisabled(False)
             self.doubleSpinBox_OV_Lim.setDisabled(False)
             self.spinBox_Cur_Lim.setDisabled(False)
             self.doubleSpinBox_Cur_lim.setDisabled(False)
+            self.spinBox_OV.setMaximum(20)
+            self.spinBox_OV.setMinimum(-20)
             self.read_output_stat = False
 
             # Turn off the equipment
             self.led_widget.turn_off()
-            self.pyvisa.turn_on_output(0)
+            self.instrument.on_off_equipment(0)
             self.status_on_off = False
 
     def adjust_output(self):
@@ -194,13 +207,14 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
 
     def read_output(self):
         while self.read_output_stat:
-            self.set_OV_int = self.spinBox_OV.text()
-            self.set_OV_dec = self.doubleSpinBox_OV.text()
-            self.set_output_vol = int(self.set_OV_int) + float(self.set_OV_dec)
-            self.lcdNumber_Voltage.display(f'{self.set_output_vol}')
+            self.vout_read = self.instrument.read_output_supply()[0]
+            self.iout_read = self.instrument.read_output_supply()[1]
+            self.lcdNumber_Voltage.display(f'{self.vout_read}')
+            self.lcdNumber_Current.display(f'{self.iout_read}')
             time.sleep(0.2)
 
     def read_user_input(self):
+        self.polarity = self.comboBox.currentText()
         self.set_OV_int = self.spinBox_OV.text()
         self.set_OV_dec = self.doubleSpinBox_OV.text()
         self.set_OV_lim_int = self.spinBox_OV_Lim.text()

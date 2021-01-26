@@ -26,7 +26,7 @@ class Kikusui_PyVisa(Basic_PyVisa):
         except:
             print(f"Unable to set VOUT --> {output_voltage}")
 
-    def set_voltage_limit(self, output_voltage_limit=1):
+    def set_voltage_limit(self, output_voltage_limit=21):
         try:
             self.inst.write(f"VOLT:LIM:UPP {output_voltage_limit}")
             self.inst.write(f"VOLT:LIM:LOW -{output_voltage_limit}")
@@ -46,13 +46,49 @@ class Kikusui_PyVisa(Basic_PyVisa):
         except:
             print(f"Unable to set OUTP --> {on_off}")
 
+    def read_output_voltage(self):
+        try:
+            read_vout = self.inst.query_ascii_values("MEAS:VOLT?")
+        except:
+            read_vout = 999
+            # print(f"Unable to set read output voltage")
+        return read_vout
+
+    def read_output_current(self):
+        try:
+            read_iout = self.inst.query_ascii_values("MEAS:CURR?")
+        except:
+            read_iout = 999
+            # print(f"Unable to set read output voltage")
+        return read_iout
+
+
+class Kikusui_features:
+    def __init__(self):
+        self.rm = Kikusui_PyVisa()
+
+    def connect_equipment(self, instrument_address):
+        print(instrument_address)
+        self.rm.connect_device(instrument_address)
+
+    def set_unipolar_cv_output(self, mode, polar, out_vol, out_vol_lim, out_cur_lim):
+        self.rm.set_mode(mode)
+        self.rm.set_polarity(polar)
+        self.rm.set_output_voltage(out_vol)
+        self.rm.set_voltage_limit(out_vol_lim)
+        self.rm.set_current_limit(out_cur_lim)
+
+    def on_off_equipment(self, on_off=0):
+        self.rm.turn_on_output(on_off)
+
+    def read_output_supply(self):
+        read_vout = self.rm.read_output_current()
+        read_iout = self.rm.read_output_voltage()
+        return read_vout, read_iout
+
 
 if __name__ == "__main__":
-    rm = Kikusui_PyVisa()
-    rm.connect_device('USB0::0x0B3E::0x1012::XF001773::0::INSTR')
-    rm.set_mode("CV")
-    rm.set_polarity("BIP")
-    rm.set_output_voltage(5)
-    rm.set_voltage_limit(10)
-    rm.set_current_limit(1)
-    rm.turn_on_output(1)
+    rm = Kikusui_features()
+    rm.connect_equipment('USB0::0x0B3E::0x1012::XF001773::0::INSTR')
+    rm.set_unipolar_cv_output("CV", "BIP", 5, 10, 1)
+    rm.on_off_equipment(1)

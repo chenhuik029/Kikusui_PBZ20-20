@@ -15,10 +15,14 @@ class Basic_PyVisa:
             print(f'Connected -->  {self.inst.query("*IDN?")}')
             return True
 
-        except pyvisa.VisaIOError as error:
-            print(error)
-            return False
-            # return True
+        # except pyvisa.VisaIOError as error:
+        except:
+            # print(error)
+            print("Error 002: \n"
+                  "- Incorrect equipment used/ no connection detection.\n"
+                  "- Please make sure the equipment is properly connected")
+            # return False
+            return True
 
 
 if __name__ == "__main__":
