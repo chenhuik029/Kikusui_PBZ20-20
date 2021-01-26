@@ -106,6 +106,7 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.actionExit.triggered.connect(self.close_app)
         self.actionBack.triggered.connect(self.navigate_back)
         self.pushButton_ONOFF.clicked.connect(self.on_off_click)
+        self.threadpool = QtCore.QThreadPool()
 
         # Add a led Widget
         self.led_widget = Led(self, on_color=Led.green, off_color=Led.red, shape=Led.circle)
@@ -130,7 +131,6 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.main_ui.show()
 
     def on_off_click(self):
-
         # Turn ON
         if not self.status_on_off:
             self.set_OV_int = self.spinBox_OV.text()
@@ -155,7 +155,8 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
                 self.doubleSpinBox_OV_Lim.setDisabled(True)
                 self.spinBox_Cur_Lim.setDisabled(True)
                 self.doubleSpinBox_Cur_lim.setDisabled(True)
-                self.lcdNumber_Voltage.display(f'{self.set_output_vol}')
+                self.read_output = Read_Output()
+                self.threadpool.start(self.read_output)
 
         # Turn OFF
         else:
@@ -166,4 +167,10 @@ class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
             self.doubleSpinBox_Cur_lim.setDisabled(False)
             self.status_on_off = False
 
+
+class Read_Output(QtCore.QRunnable):
+    def run(self):
+        # self.lcdNumber_Voltage.display(f'{self.set_output_vol}')
+        time.sleep(1)
+        print("Reading...")
 
