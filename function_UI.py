@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QLineEdit, QApplication
+from PyQt5.QtWidgets import QMainWindow, QLineEdit, QApplication, QDesktopWidget
 from PyQt5 import QtWidgets, QtCore, QtGui
-from UIpy import Main_UI, CV_Console_UI
+from UIpy import Main_UI, CV_Console_UI, SEQ_Console_UI
 from function_msgbox import msg_box_ok, msg_box_auto_close, msg_box_ok_cancel
 from Instrument_PyVisa import Kikusui_PyVisa
 from pyqt_led import Led
@@ -33,9 +33,11 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         # Button connection
         self.actionExit.triggered.connect(self.close_app)
         self.pushButton_CV_mode.clicked.connect(self.goto_cv_console_mode)
+        self.pushButton_Programmable_Mode.clicked.connect(self.goto_seq_console_mode)
         self.pushButton_refresh.clicked.connect(self.combobox_equipment_list)
         self.pushButton_Connect.clicked.connect(self.connect_equipment)
         self.comboBox_list_instrument.currentIndexChanged.connect(self.check_selected_equipment)
+
 
         # Variables
         self.equipment_list = []
@@ -50,6 +52,11 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         self.close()
         self.console_mode = FV_Console_UI(self.selected_equipment)
         self.console_mode.show()
+
+    def goto_seq_console_mode(self):
+        self.close()
+        self.seq_console_mode = Prog_Console_UI(self.selected_equipment)
+        self.seq_console_mode.show()
 
     # Add connected equipment to the list
     def combobox_equipment_list(self):
@@ -107,10 +114,11 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
+        self.setupUi(self)
+
         self.read_thread = Thread(target=self.read_output)
         self.instrument = Kikusui_PyVisa.Kikusui_features()
         self.selected_equipment = selected_equipment
-        self.setupUi(self)
 
         # Sent event triggered
         self.actionExit.triggered.connect(self.close_app)
@@ -230,7 +238,28 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.set_cur_limit = int(self.set_cur_lim_int) + float(self.set_cur_lim_dec)
 
 
-class Prog_Console_UI(QMainWindow, ):
-    pass
+class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
+    def __init__(self, selected_equipment):
+        super().__init__()
+        self.setupUi(self)
 
+        # Move to centre of screen
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
+        self.selected_equipment = selected_equipment
+
+        # Sent event triggered
+        self.actionExit.triggered.connect(self.close_app)
+        self.actionBack.triggered.connect(self.navigate_back)
+
+    def close_app(self):
+        self.close()
+
+    def navigate_back(self):
+        # close thread for read output voltage
+        self.close()
+        self.main_ui = MainUI()
+        self.main_ui.show()
