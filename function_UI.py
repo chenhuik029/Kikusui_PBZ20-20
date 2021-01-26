@@ -16,9 +16,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         super().__init__()
         self.setupUi(self)
 
-        self.pushButton_Connect.setDisabled(True)
-        self.pushButton_CV_mode.setDisabled(True)
-        self.pushButton_Programmable_Mode.setDisabled(True)
+        # self.pushButton_Connect.setDisabled(True)
+        # self.pushButton_CV_mode.setDisabled(True)
+        # self.pushButton_Programmable_Mode.setDisabled(True)
 
         # Add a led Widget
         self.led_widget = Led(self, on_color=Led.green, off_color=Led.red, shape=Led.circle)
@@ -48,11 +48,14 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Switch to console mode
     def goto_cv_console_mode(self):
         self.close()
-        self.console_mode = CV_Console_UI(self.selected_equipment)
+        self.console_mode = FV_Console_UI(self.selected_equipment)
         self.console_mode.show()
 
     # Add connected equipment to the list
     def combobox_equipment_list(self):
+        self.pushButton_Connect.setDisabled(True)
+        self.pushButton_CV_mode.setDisabled(True)
+        self.pushButton_Programmable_Mode.setDisabled(True)
         self.comboBox_list_instrument.clear()
         self.scan_equipment_list()
         self.led_widget.turn_off()
@@ -101,7 +104,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
             self.pushButton_Programmable_Mode.setEnabled(True)
 
 
-class CV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
+class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
         self.read_thread = Thread(target=self.read_output)
@@ -225,5 +228,9 @@ class CV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.set_output_vol = int(self.set_OV_int) + float(self.set_OV_dec)
         self.set_output_vol_limit = int(self.set_OV_lim_int) + float(self.set_OV_lim_dec)
         self.set_cur_limit = int(self.set_cur_lim_int) + float(self.set_cur_lim_dec)
+
+
+class Prog_Console_UI(QMainWindow, ):
+    pass
 
 
