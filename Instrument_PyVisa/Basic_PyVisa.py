@@ -11,13 +11,14 @@ class Basic_PyVisa:
 
     def connect_device(self, target_resource_instr):
         try:
-            self.rm.open_resource(target_resource_instr)
+            self.inst = self.rm.open_resource(target_resource_instr)
+            print(f'Connected -->  {self.inst.query("*IDN?")}')
             return True
 
-        except ValueError as error:
+        except pyvisa.VisaIOError as error:
             print(error)
-            # return False
-            return True
+            return False
+            # return True
 
 
 if __name__ == "__main__":
