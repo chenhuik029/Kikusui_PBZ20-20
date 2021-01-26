@@ -48,7 +48,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Switch to console mode
     def goto_cv_console_mode(self):
         self.close()
-        self.console_mode = Console_UI(self.selected_equipment)
+        self.console_mode = CV_Console_UI(self.selected_equipment)
         self.console_mode.show()
 
     # Add connected equipment to the list
@@ -101,7 +101,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
             self.pushButton_Programmable_Mode.setEnabled(True)
 
 
-class Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
+class CV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
         self.read_thread = Thread(target=self.read_output)
