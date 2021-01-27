@@ -74,6 +74,7 @@ class Kikusui_features:
     def connect_equipment(self, instrument_address):
         print(instrument_address)
         self.kikusui.connect_device(instrument_address)
+        self.kikusui.turn_on_output(0)
 
     def disconnect_equipment(self):
         self.kikusui.disconnect_device()
