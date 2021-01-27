@@ -1,5 +1,5 @@
 import pyvisa
-
+import time
 
 # All the basic PyVISA command should be placed here.
 class Basic_PyVisa:
@@ -21,13 +21,24 @@ class Basic_PyVisa:
             print("Error 002: \n"
                   "- Incorrect equipment used/ no connection detection.\n"
                   "- Please make sure the equipment is properly connected")
-            # return False
-            return True
+            return False
+
+    def disconnect_device(self):
+        try:
+            self.inst.close()
+            print("Session close")
+        except:
+            print("Error 003: Unable to close the session")
+
+    def display_session(self):
+        return self.inst.session
 
 
 if __name__ == "__main__":
     rm = Basic_PyVisa()
     rm.connect_device('USB0::0x0B3E::0x1012::XF001773::0::INSTR')
+    rm.disconnect_device()
+
 
 
 

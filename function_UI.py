@@ -26,6 +26,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         self.horizontalLayout_4.addWidget(self.led_widget)
 
         self.instrument = Kikusui_PyVisa.Kikusui_features()
+        self.list_instrument = Kikusui_PyVisa.Kikusui_PyVisa()
 
         # Print out scanned equipment
         self.combobox_equipment_list()
@@ -42,6 +43,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         # Variables
         self.equipment_list = []
         self.selected_equipment = ""
+        self.active_session = False
 
     def close_app(self):
         msg_box_auto_close("Closing Program")
@@ -60,6 +62,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Add connected equipment to the list
     def combobox_equipment_list(self):
+
         self.pushButton_Connect.setDisabled(True)
         self.pushButton_CV_mode.setDisabled(True)
         self.pushButton_Programmable_Mode.setDisabled(True)
@@ -81,10 +84,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Scan connected equipment
     def scan_equipment_list(self):
-        # self.equipment_list = self.instrument.list_connected_devices()
-
+        self.equipment_list = self.list_instrument.list_connected_devices()
         # To be deleted when actual instrument was used.
-        self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
+        # self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
 
     # Check selected equipment
     def check_selected_equipment(self):
@@ -98,8 +100,8 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Connect to selected equipment
     def connect_equipment(self):
         self.selected_equipment = self.comboBox_list_instrument.currentText()
-        status = True
-        # status = self.instrument.connect_equipment(self.selected_equipment)
+        # status = True
+        status = self.instrument.connect_equipment(self.selected_equipment)
         if status is False:
             msg_box_ok(f'ERROR 001:\n\n{self.selected_equipment} is busy\n'
                        f'OR not available\n'
@@ -124,8 +126,10 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.actionExit.triggered.connect(self.close_app)
         self.actionBack.triggered.connect(self.navigate_back)
         self.pushButton_ONOFF.clicked.connect(self.on_off_click)
+        self.spinBox_OV.valueChanged.connect(self.adjust_output)
+        self.doubleSpinBox_OV.valueChanged.connect(self.adjust_output)
 
-        # Add a led Widget
+        # Add a LED Widget
         self.led_widget = Led(self, on_color=Led.green, off_color=Led.red, shape=Led.circle)
         self.led_widget.setFixedSize(25, 25)
         self.horizontalLayout_6.addWidget(self.led_widget)
@@ -151,6 +155,7 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         # close thread for read output voltage
         self.read_output_stat = False
         self.instrument.on_off_equipment(0)
+        self.instrument.disconnect_equipment()
         msg_box_auto_close("Closing Program")
         self.close()
 
@@ -158,6 +163,7 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         # close thread for read output voltage
         self.read_output_stat = False
         self.instrument.on_off_equipment(0)
+        self.instrument.disconnect_equipment()
         self.close()
         self.main_ui = MainUI()
         self.main_ui.show()
@@ -168,7 +174,7 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         if not self.status_on_off:
 
             self.read_user_input()
-            self.read_thread = Thread(target=self.read_output)
+            # self.read_thread = Thread(target=self.read_output)
 
             # Check output is > limit set
             if self.set_output_vol >= self.set_output_vol_limit:
@@ -185,16 +191,18 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
                 self.spinBox_OV.setMaximum(int(self.set_OV_lim_int)-1)
                 self.spinBox_OV.setMinimum(-(int(self.set_OV_lim_int) - 1))
 
-                # Enable read output and display
-                self.read_output_stat = True
-                self.read_thread.start()
-
                 # Turn On output of the Equipment
                 self.led_widget.turn_on()
                 self.status_on_off = True
                 self.instrument.connect_equipment(self.selected_equipment)
+                # self.instrument.clear_error()
                 self.instrument.set_unipolar_cv_output("CV", self.polarity, self.set_output_vol, self.set_output_vol_limit, self.set_cur_limit)
                 self.instrument.on_off_equipment(1)
+
+                # Enable read output and display
+                self.read_thread = Thread(target=self.read_output)
+                self.read_output_stat = True
+                self.read_thread.start()
 
         # Turn OFF
         else:
@@ -212,9 +220,12 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
             self.led_widget.turn_off()
             self.instrument.on_off_equipment(0)
             self.status_on_off = False
+            self.read_thread.join()
 
     def adjust_output(self):
-        pass
+        if self.status_on_off:
+            self.read_user_input()
+            self.instrument.update_output_voltage(self.set_output_vol)
 
     def read_output(self):
         while self.read_output_stat:
@@ -222,7 +233,7 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
             self.iout_read = self.instrument.read_output_supply()[1]
             self.lcdNumber_Voltage.display(f'{self.vout_read}')
             self.lcdNumber_Current.display(f'{self.iout_read}')
-            time.sleep(0.2)
+            # time.sleep(0.3)
 
     def read_user_input(self):
         self.polarity = self.comboBox.currentText()

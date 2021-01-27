@@ -1,5 +1,6 @@
 import pyvisa
 from Instrument_PyVisa.Basic_PyVisa import Basic_PyVisa
+import time
 
 
 # Only Kikusui PBZ20-20 specified PyVISA command should be placed here.
@@ -62,33 +63,51 @@ class Kikusui_PyVisa(Basic_PyVisa):
             # print(f"Unable to set read output voltage")
         return read_iout
 
+    def clear_error(self):
+        self.inst.write("*CLS")
+
 
 class Kikusui_features:
     def __init__(self):
-        self.rm = Kikusui_PyVisa()
+        self.kikusui = Kikusui_PyVisa()
 
     def connect_equipment(self, instrument_address):
         print(instrument_address)
-        self.rm.connect_device(instrument_address)
+        self.kikusui.connect_device(instrument_address)
+
+    def disconnect_equipment(self):
+        self.kikusui.disconnect_device()
 
     def set_unipolar_cv_output(self, mode, polar, out_vol, out_vol_lim, out_cur_lim):
-        self.rm.set_mode(mode)
-        self.rm.set_polarity(polar)
-        self.rm.set_output_voltage(out_vol)
-        self.rm.set_voltage_limit(out_vol_lim)
-        self.rm.set_current_limit(out_cur_lim)
+        self.kikusui.set_mode(mode)
+        self.kikusui.set_polarity(polar)
+        self.kikusui.set_output_voltage(out_vol)
+        self.kikusui.set_voltage_limit(out_vol_lim)
+        self.kikusui.set_current_limit(out_cur_lim)
+
+    def update_output_voltage(self, out_vol):
+        self.kikusui.set_output_voltage(out_vol)
 
     def on_off_equipment(self, on_off=0):
-        self.rm.turn_on_output(on_off)
+        self.kikusui.turn_on_output(on_off)
 
     def read_output_supply(self):
-        read_vout = self.rm.read_output_current()
-        read_iout = self.rm.read_output_voltage()
+        read_iout = self.kikusui.read_output_current()
+        read_vout = self.kikusui.read_output_voltage()
         return read_vout, read_iout
+
+    def clear_error(self):
+        self.kikusui.clear_error()
 
 
 if __name__ == "__main__":
     rm = Kikusui_features()
     rm.connect_equipment('USB0::0x0B3E::0x1012::XF001773::0::INSTR')
-    rm.set_unipolar_cv_output("CV", "BIP", 5, 10, 1)
-    rm.on_off_equipment(1)
+    rm.clear_error()
+    rm.disconnect_equipment()
+
+    # rm.set_unipolar_cv_output("CV", "BIP", 5, 10, 1)
+    # rm.on_off_equipment(1)
+    # time.sleep(1)
+    # print(rm.read_output_supply())
+
