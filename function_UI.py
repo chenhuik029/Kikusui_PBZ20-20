@@ -84,9 +84,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Scan connected equipment
     def scan_equipment_list(self):
-        self.equipment_list = self.list_instrument.list_connected_devices()
+        # self.equipment_list = self.list_instrument.list_connected_devices()
         # To be deleted when actual instrument was used.
-        # self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
+        self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
 
     # Check selected equipment
     def check_selected_equipment(self):
@@ -100,8 +100,8 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Connect to selected equipment
     def connect_equipment(self):
         self.selected_equipment = self.comboBox_list_instrument.currentText()
-        # status = True
-        status = self.instrument.connect_equipment(self.selected_equipment)
+        status = True
+        # status = self.instrument.connect_equipment(self.selected_equipment)
         if status is False:
             msg_box_ok(f'ERROR 001:\n\n{self.selected_equipment} is busy\n'
                        f'OR not available\n'
@@ -182,28 +182,33 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
                            "Output Voltage Limit must be larger than set Output Voltage!")
 
             else:
-                # Disable control
-                self.comboBox.setDisabled(True)
-                self.spinBox_OV_Lim.setDisabled(True)
-                self.doubleSpinBox_OV_Lim.setDisabled(True)
-                self.spinBox_Cur_Lim.setDisabled(True)
-                self.doubleSpinBox_Cur_lim.setDisabled(True)
-                self.spinBox_OV.setMaximum(int(self.set_OV_lim_int)-1)
-                self.spinBox_OV.setMinimum(-(int(self.set_OV_lim_int) - 1))
-
                 # Turn On output of the Equipment
-                self.led_widget.turn_on()
-                self.status_on_off = True
                 self.instrument.connect_equipment(self.selected_equipment)
-                # self.instrument.clear_error()
-                self.instrument.set_unipolar_cv_output("CV", self.polarity, self.set_output_vol, self.set_output_vol_limit, self.set_cur_limit)
-                self.instrument.on_off_equipment(1)
+                status_set_voltage = self.instrument.set_unipolar_cv_output("CV", self.polarity, self.set_output_vol, self.set_output_vol_limit, self.set_cur_limit)
+                status_on_output = self.instrument.on_off_equipment(1)
 
-                # Enable read output and display
-                self.read_thread = Thread(target=self.read_output)
-                self.read_output_stat = True
-                self.read_thread.start()
+                if status_on_output and status_set_voltage:
+                    # Disable control
+                    self.comboBox.setDisabled(True)
+                    self.spinBox_OV_Lim.setDisabled(True)
+                    self.doubleSpinBox_OV_Lim.setDisabled(True)
+                    self.spinBox_Cur_Lim.setDisabled(True)
+                    self.doubleSpinBox_Cur_lim.setDisabled(True)
+                    self.spinBox_OV.setMaximum(int(self.set_OV_lim_int) - 1)
+                    self.spinBox_OV.setMinimum(-(int(self.set_OV_lim_int) - 1))
+                    self.led_widget.turn_on()
+                    self.status_on_off = True
 
+                    # Enable read output and display
+                    self.read_thread = Thread(target=self.read_output)
+                    self.read_output_stat = True
+                    self.read_thread.start()
+
+                else:
+                    msg_box_ok("Error 003:\n"
+                               "Unable to communicate with equipment.\n"
+                               "Failed to turn on the output.\n"
+                               "Please return to previous page to reconnect the equipment")
         # Turn OFF
         else:
             # Enable control
@@ -259,12 +264,26 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+        self.tableWidget.setColumnWidth(0, 170)
 
-        self.selected_equipment = selected_equipment
+        # Add item to combo box
+        self.comboBox_polarity.addItems(["UNIPolar", "BIPolar"])
+        self.comboBox_mode.addItems(["CV", "CC"])
+        self.comboBox_polarity.setCurrentIndex(0)
+        self.comboBox_mode.setCurrentIndex(0)
 
         # Sent event triggered
         self.actionExit.triggered.connect(self.close_app)
         self.actionBack.triggered.connect(self.navigate_back)
+        self.pushButton_Back.clicked.connect(self.navigate_back)
+        self.pushButton_CreateTable.clicked.connect(self.create_table)
+        self.pushButton_ClearTable.clicked.connect(self.clear_table)
+
+
+        # Define Variable
+        self.selected_equipment = selected_equipment
+        self.table_created = False
+        self.steps = 0
 
     def close_app(self):
         self.close()
@@ -274,3 +293,19 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         self.close()
         self.main_ui = MainUI()
         self.main_ui.show()
+
+    def create_table(self):
+        self.steps = int(self.spinBox_steps.text())
+        exist_step = self.tableWidget.columnCount() - 1
+
+        for step in range(self.steps):
+            column_to_add = exist_step + (step + 1)
+            self.tableWidget.insertColumn(column_to_add)
+            self.tableWidget.setHorizontalHeaderItem(column_to_add, QtWidgets.QTableWidgetItem(str(column_to_add)))
+
+    def clear_table(self):
+        exist_step = self.tableWidget.columnCount()
+        for step in range(exist_step):
+            self.tableWidget.removeColumn(1)
+
+

@@ -11,41 +11,53 @@ class Kikusui_PyVisa(Basic_PyVisa):
     def set_polarity(self, polarity="UNIP"):
         try:
             self.inst.write(f"FUNC:POL {polarity}")
+            return True
         except:
             print(f"Unable to set Polarity --> {polarity}")
+            return False
 
     def set_mode(self, string_mode="CV"):
         try:
             self.inst.write(f"FUNC:MODE {string_mode}")
             print(f"Mode set to {string_mode}")
+            return True
         except:
             print(f"Unable to set Mode --> {string_mode}")
+            return False
 
     def set_output_voltage(self, output_voltage=0):
         try:
             self.inst.write(f"VOLT {output_voltage}")
+            return True
         except:
             print(f"Unable to set VOUT --> {output_voltage}")
+            return False
 
     def set_voltage_limit(self, output_voltage_limit=21):
         try:
             self.inst.write(f"VOLT:LIM:UPP {output_voltage_limit}")
             self.inst.write(f"VOLT:LIM:LOW -{output_voltage_limit}")
+            return True
         except:
             print(f"Unable to set VOUT Limit --> {output_voltage_limit}")
+            return False
 
     def set_current_limit(self, output_current_limit=1):
         try:
             self.inst.write(f"CURR:LIM:UPP {output_current_limit}")
             self.inst.write(f"CURR:LIM:LOW -{output_current_limit}")
+            return True
         except:
             print(f"Unable to set Current Limit --> {output_current_limit}")
+            return False
 
     def turn_on_output(self, on_off=0):
         try:
             self.inst.write(f"OUTP {on_off}")
+            return True
         except:
             print(f"Unable to set OUTP --> {on_off}")
+            return False
 
     def read_output_voltage(self):
         try:
@@ -80,17 +92,19 @@ class Kikusui_features:
         self.kikusui.disconnect_device()
 
     def set_unipolar_cv_output(self, mode, polar, out_vol, out_vol_lim, out_cur_lim):
-        self.kikusui.set_mode(mode)
-        self.kikusui.set_polarity(polar)
-        self.kikusui.set_output_voltage(out_vol)
-        self.kikusui.set_voltage_limit(out_vol_lim)
-        self.kikusui.set_current_limit(out_cur_lim)
+        status1 = self.kikusui.set_mode(mode)
+        status2 = self.kikusui.set_polarity(polar)
+        status3 = self.kikusui.set_output_voltage(out_vol)
+        status4 = self.kikusui.set_voltage_limit(out_vol_lim)
+        status5 = self.kikusui.set_current_limit(out_cur_lim)
+        final_status = status1 and status2 and status3 and status4 and status5
+        return final_status
 
     def update_output_voltage(self, out_vol):
         self.kikusui.set_output_voltage(out_vol)
 
     def on_off_equipment(self, on_off=0):
-        self.kikusui.turn_on_output(on_off)
+        return self.kikusui.turn_on_output(on_off)
 
     def read_output_supply(self):
         read_iout = self.kikusui.read_output_current()
