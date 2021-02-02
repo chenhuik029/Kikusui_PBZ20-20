@@ -100,8 +100,8 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Connect to selected equipment
     def connect_equipment(self):
         self.selected_equipment = self.comboBox_list_instrument.currentText()
-        status = True
-        # status = self.instrument.connect_equipment(self.selected_equipment)
+        # status = True
+        status = self.instrument.connect_equipment(self.selected_equipment)
         if status is False:
             msg_box_ok(f'ERROR 001:\n\n{self.selected_equipment} is busy\n'
                        f'OR not available\n'
