@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QLineEdit, QApplication, QDesktopWidget
 from PyQt5 import QtWidgets, QtCore, QtGui
-from UIpy import Main_UI, CV_Console_UI, SEQ_Console_UI
+from UIpy import Main_UI, CV_Console_UI, SEQ_Console_UI, SEQ_AddEdit_UI
 from function_msgbox import msg_box_ok, msg_box_auto_close, msg_box_ok_cancel
 from Instrument_PyVisa import Kikusui_PyVisa
 from pyqt_led import Led
@@ -258,8 +258,12 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
         self.setupUi(self)
+        self.pushButton_RunSequence.setDisabled(True)
+        self.pushButton_StoreSequency.setDisabled(True)
+        self.pushButton_AddEditStep.setDisabled(True)
+        self.pushButton_DelStep.setDisabled(True)
 
-        # Move to centre of screen
+        # Move UI to centre of screen
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
@@ -278,12 +282,14 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         self.pushButton_Back.clicked.connect(self.navigate_back)
         self.pushButton_CreateTable.clicked.connect(self.create_table)
         self.pushButton_ClearTable.clicked.connect(self.clear_table)
-
+        self.tableWidget.doubleClicked.connect(self.add_edit_step)
+        self.pushButton_AddEditStep.clicked.connect(self.add_edit_step)
 
         # Define Variable
         self.selected_equipment = selected_equipment
         self.table_created = False
         self.steps = 0
+        self.step_selected = 0
 
     def close_app(self):
         self.close()
@@ -296,16 +302,63 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
 
     def create_table(self):
         self.steps = int(self.spinBox_steps.text())
-        exist_step = self.tableWidget.columnCount() - 1
 
-        for step in range(self.steps):
-            column_to_add = exist_step + (step + 1)
-            self.tableWidget.insertColumn(column_to_add)
-            self.tableWidget.setHorizontalHeaderItem(column_to_add, QtWidgets.QTableWidgetItem(str(column_to_add)))
+        if int(self.steps) > 0:
+            self.pushButton_RunSequence.setDisabled(False)
+            self.pushButton_StoreSequency.setDisabled(False)
+            self.pushButton_AddEditStep.setDisabled(False)
+            self.pushButton_DelStep.setDisabled(False)
+
+            exist_step = self.tableWidget.columnCount() - 1
+
+            for step in range(self.steps):
+                column_to_add = exist_step + (step + 1)
+                self.tableWidget.insertColumn(column_to_add)
+                self.tableWidget.setHorizontalHeaderItem(column_to_add, QtWidgets.QTableWidgetItem(str(column_to_add)))
 
     def clear_table(self):
+        self.pushButton_RunSequence.setDisabled(True)
+        self.pushButton_StoreSequency.setDisabled(True)
+        self.pushButton_AddEditStep.setDisabled(True)
+        self.pushButton_DelStep.setDisabled(True)
+
         exist_step = self.tableWidget.columnCount()
         for step in range(exist_step):
             self.tableWidget.removeColumn(1)
+
+    def add_edit_step(self):
+        self.step_selected = self.tableWidget.currentColumn()
+        if self.step_selected > 0:
+            self.addedit_table = AddEdit_Seq(step_selected=self.step_selected)
+            self.addedit_table.show()
+        else:
+            msg_box_ok("Please select any row from the required STEP column by clicking on one of the STEP's cell")
+
+
+class AddEdit_Seq(QMainWindow, SEQ_AddEdit_UI.Ui_AddEdit_SEQ):
+    def __init__(self, step_selected):
+        super().__init__()
+        self.step_selected = step_selected
+        self.setupUi(self)
+        self.Step_Label.setText(str(step_selected))
+        self.Cancel.clicked.connect(self.cancel)
+        self.StepOut_ONOFF.addItems(["OFF", "ON"])
+        self.DCRamp_ONOFF.addItems(["OFF", "ON"])
+        self.TrigIn_ONOFF.addItems(["OFF", "ON"])
+        self.TrigOut_ONOFF.addItems(["OFF", "ON"])
+        self.ACSprImp_ONOFF.addItems(["OFF", "ON"])
+        self.ACSwpAmp_ONOFF.addItems(["OFF", "ON"])
+        self.ACFreqSwp_ONOFF.addItems(["OFF", "ON"])
+
+    def cancel(self):
+        status = msg_box_ok_cancel("Cancel changes?")
+        if status:
+            self.close()
+
+    def apply(self):
+        pass
+
+
+
 
 
