@@ -78,6 +78,20 @@ class Kikusui_PyVisa(Basic_PyVisa):
     def clear_error(self):
         self.inst.write("*CLS")
 
+    def set_store_seq_definition(self, SEQ_NUMBER, SEQ_STEPS, SEQ_NAME, SEQ_POLARITY, SEQ_MODE, SEQ_LOOP):
+        try:
+            self.inst.write(f'PROG:NAME {SEQ_NUMBER}')
+            self.inst.write(f'PROG:EDIT:DEL')
+            self.inst.write(f'PROG:EDIT:ADD {SEQ_STEPS}')
+            self.inst.write(f'PROG:EDIT:TITL "{SEQ_NAME}"')
+            self.inst.write(f'PROG:EDIT:FUNC:POL {SEQ_POLARITY}')
+            self.inst.write(f'PROG:EDIT:FUNC:MODE {SEQ_MODE}')
+            self.inst.write(f'PROG:EDIT:FUNC:LOOP {SEQ_LOOP}')
+            return True
+        except:
+            print(f"Set Sequence Definition Error!")
+            return False
+
 
 class Kikusui_features:
     def __init__(self):
@@ -91,7 +105,7 @@ class Kikusui_features:
     def disconnect_equipment(self):
         self.kikusui.disconnect_device()
 
-    def set_unipolar_cv_output(self, mode, polar, out_vol, out_vol_lim, out_cur_lim):
+    def set_cv_output(self, mode, polar, out_vol, out_vol_lim, out_cur_lim):
         status1 = self.kikusui.set_mode(mode)
         status2 = self.kikusui.set_polarity(polar)
         status3 = self.kikusui.set_output_voltage(out_vol)
@@ -99,6 +113,15 @@ class Kikusui_features:
         status5 = self.kikusui.set_current_limit(out_cur_lim)
         final_status = status1 and status2 and status3 and status4 and status5
         return final_status
+
+    def set_sequence_output(self, seq_definition_setting):
+        status_set_def = self.kikusui.set_store_seq_definition(seq_definition_setting[0],
+                                                               seq_definition_setting[1],
+                                                               seq_definition_setting[2],
+                                                               seq_definition_setting[3],
+                                                               seq_definition_setting[4],
+                                                               seq_definition_setting[5])
+        return status_set_def
 
     def update_output_voltage(self, out_vol):
         self.kikusui.set_output_voltage(out_vol)
