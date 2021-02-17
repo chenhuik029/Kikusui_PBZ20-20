@@ -87,10 +87,61 @@ class Kikusui_PyVisa(Basic_PyVisa):
             self.inst.write(f'PROG:EDIT:FUNC:POL {SEQ_POLARITY}')
             self.inst.write(f'PROG:EDIT:FUNC:MODE {SEQ_MODE}')
             self.inst.write(f'PROG:EDIT:FUNC:LOOP {SEQ_LOOP}')
-            return True
+            error_msg = ""
+            return True, error_msg
         except:
             print(f"Set Sequence Definition Error!")
-            return False
+            error_msg = f"Set Sequence Definition Error!"
+            return False, error_msg
+
+    def set_DCparam_seq_setting(self, STEP, STEP_TIME, STEP_DCV,
+                                STEP_DCRAMP_ONOFF, STEP_DC_RAMP_START, STEP_DC_RAMP_STOP, STEP_DC_OUT_ONOFF,
+                                TRIG_OUT, TRIG_IN):
+        try:
+            self.inst.write(f'PROG:EDIT:STEP:SEL {STEP}')
+            self.inst.write(f'PROG:EDIT:STEP:TIME {STEP_TIME}')
+            if STEP_DCRAMP_ONOFF == "ON":
+                self.inst.write(f'PROG:EDIT:STEP:VOLT {STEP_DC_RAMP_STOP},RAMP')
+                self.inst.write(f'PROG:EDIT:STEP:VOLT:RAMP {STEP_DC_RAMP_START}')
+            else:
+                self.inst.write(f'PROG:EDIT:STEP:VOLT {STEP_DCV},IMM')
+            self.inst.write(f'PROG:EDIT:STEP:STAT {STEP_DC_OUT_ONOFF},{TRIG_OUT},{TRIG_IN}')
+            error_msg = ""
+            return True, error_msg
+
+        except:
+            print(f"Set DC parameter sequencing Error!")
+            error_msg = f"Set DC parameter sequencing Error!"
+            return False, error_msg
+
+    def set_ACparam_seq_setting(self, AC_STAT_ONOFF, AC_FUNC, AC_AMPL, AC_FREQ, AC_PHASE, AC_DUTY,
+                                AC_AMPL_SWEEP_ONOFF, AC_AMPL_SWEEP_START, AC_AMPL_SWEEP_STOP,
+                                AC_FREQ_SWEEP_ONOFF, AC_FREQ_CHAR, AC_FERQ_START, AC_FREQ_STOP):
+        try:
+            self.inst.write(f'PROG:EDIT:STEP:AC:STAT {AC_STAT_ONOFF}')                  # SuperImpose on off
+            self.inst.write(f'PROG:EDIT:STEP:FUNC {AC_FUNC}')                           # AC Signal Waveform
+            self.inst.write(f'PROG:EDIT:STEP:PHAS {AC_PHASE},ON')                       # AC Signal Phase angle
+            self.inst.write(f'PROG:EDIT:STEP:SQU:DCYC {AC_DUTY}')                       # AC Duty Cycle
+
+            if AC_AMPL_SWEEP_ONOFF == "ON":
+                self.inst.write(f'PROG:EDIT:STEP:VOLT:AC {AC_AMPL_SWEEP_STOP},SWE')     # AC Sweep Stop Amp
+                self.inst.write(f'PROG:EDIT:STEP:VOLT:AC:SWE {AC_AMPL_SWEEP_START}')    # AC Sweep Start Amp
+            else:
+                self.inst.write(f'PROG:EDIT:STEP:VOLT:AC {AC_AMPL}, IMM')               # AC Sweep Amp
+
+            if AC_FREQ_SWEEP_ONOFF == "ON":
+                self.inst.write(f'PROG:EDIT:STEP:FREQ {AC_FREQ_STOP},SWE')                  # AC Freq Sweep Stop Freq
+                self.inst.write(f'PROG:EDIT:STEP:FREQ:SWE {AC_FREQ_CHAR},{AC_FERQ_START}')  # AC Freq Sweep Char and Start Freq
+            else:
+                self.inst.write(f'PROG:EDIT:STEP:FREQ {AC_FREQ},IMM')                   # AC Signal Amp when IMM (Stop if SWE)
+
+            error_msg = ""
+
+            return True, error_msg
+        except:
+            print(f"Set AC parameter sequencing Error!")
+            error_msg = f"Set AC parameter sequencing Error!"
+            return False, error_msg
 
 
 class Kikusui_features:
@@ -114,14 +165,62 @@ class Kikusui_features:
         final_status = status1 and status2 and status3 and status4 and status5
         return final_status
 
-    def set_sequence_output(self, seq_definition_setting):
-        status_set_def = self.kikusui.set_store_seq_definition(seq_definition_setting[0],
+    def set_sequence_output(self, seq_definition_setting, sequence_setting):
+
+        # First - Set Store sequence Definition
+        status_set_def, error_msg_def = self.kikusui.set_store_seq_definition(seq_definition_setting[0],
                                                                seq_definition_setting[1],
                                                                seq_definition_setting[2],
                                                                seq_definition_setting[3],
                                                                seq_definition_setting[4],
                                                                seq_definition_setting[5])
-        return status_set_def
+
+        if status_set_def:
+
+            status_set_dcparam = False
+            status_set_acparam = False
+            error_msg = ""
+
+            # Second Set DC Param Sequence
+            for step in range(len(sequence_setting)):
+                status_set_dcparam, error_msg_dcparam = self.kikusui.set_DCparam_seq_setting(STEP=sequence_setting[step][0],
+                                                                                             STEP_TIME=sequence_setting[step][1],
+                                                                                             STEP_DCV=sequence_setting[step][2],
+                                                                                             STEP_DCRAMP_ONOFF=sequence_setting[step][3],
+                                                                                             STEP_DC_RAMP_START=sequence_setting[step][4],
+                                                                                             STEP_DC_RAMP_STOP=sequence_setting[step][5],
+                                                                                             STEP_DC_OUT_ONOFF=sequence_setting[step][6],
+                                                                                             TRIG_OUT=sequence_setting[step][7],
+                                                                                             TRIG_IN=sequence_setting[step][8])
+
+                if not status_set_dcparam:
+                    error_msg = error_msg_dcparam
+                    break
+
+                status_set_acparam, error_msg_acparam = self.kikusui.set_ACparam_seq_setting(AC_STAT_ONOFF=sequence_setting[step][9],
+                                                                                             AC_FUNC=sequence_setting[step][10],
+                                                                                             AC_AMPL=sequence_setting[step][11],
+                                                                                             AC_FREQ=sequence_setting[step][12],
+                                                                                             AC_PHASE=sequence_setting[step][13],
+                                                                                             AC_DUTY=sequence_setting[step][14],
+                                                                                             AC_AMPL_SWEEP_ONOFF=sequence_setting[step][15],
+                                                                                             AC_AMPL_SWEEP_START=sequence_setting[step][16],
+                                                                                             AC_AMPL_SWEEP_STOP=sequence_setting[step][17],
+                                                                                             AC_FREQ_SWEEP_ONOFF=sequence_setting[step][18],
+                                                                                             AC_FREQ_CHAR=sequence_setting[step][19],
+                                                                                             AC_FERQ_START=sequence_setting[step][20],
+                                                                                             AC_FREQ_STOP=sequence_setting[step][21])
+                if not status_set_acparam:
+                    error_msg = error_msg_acparam
+                    break
+
+            status_set = status_set_dcparam and status_set_acparam
+
+        else:
+            status_set = status_set_def
+            error_msg = error_msg_def
+
+        return status_set, error_msg
 
     def update_output_voltage(self, out_vol):
         self.kikusui.set_output_voltage(out_vol)

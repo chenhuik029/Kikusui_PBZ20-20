@@ -49,12 +49,13 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         msg_box_auto_close("Closing Program")
         self.close()
 
-    # Switch to console mode
+    # Switch to constant voltage console mode
     def goto_cv_console_mode(self):
         self.close()
         self.console_mode = FV_Console_UI(self.selected_equipment)
         self.console_mode.show()
 
+    # Switch to sequential console mode
     def goto_seq_console_mode(self):
         self.close()
         self.seq_console_mode = Prog_Console_UI(self.selected_equipment)
@@ -113,6 +114,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
             self.pushButton_Programmable_Mode.setEnabled(True)
 
 
+# Fixed Voltage UI
 class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
@@ -256,6 +258,7 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
         self.set_cur_limit = int(self.set_cur_lim_int) + float(self.set_cur_lim_dec)
 
 
+# Sequential Voltage UI
 class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
@@ -335,10 +338,11 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         if status:
             self.pushButton_RunSequence.setDisabled(True)
             self.pushButton_StoreSequency.setDisabled(True)
-            self.pushButton_AddEditStep.setDisabled(True)
+            self.pushButton_AddEditSeq.setDisabled(True)
             self.pushButton_DelStep.setDisabled(True)
 
             exist_step = self.tableWidget.columnCount()
+            print(exist_step)
             for step in range(exist_step):
                 self.tableWidget.removeColumn(1)
 
@@ -396,14 +400,20 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
                 seq_name = f'Sequence_{seq_no}'
 
             read_setting = [seq_name, seq_no, seq_polarity, seq_mode, seq_iteration, seq_steps]
-            print(read_setting)
+
+            # Connect Equipment
             self.instrument.connect_equipment(self.selected_equipment)
-            status = self.instrument.set_sequence_output(read_setting)
+            print(read_sequence)
+            # Set sequence output
+            status, error_msg = self.instrument.set_sequence_output(read_setting, read_sequence)
+
             if not status:
-                msg_box_ok("Set Sequence is not succesful!\n\n"
+                msg_box_ok(f"{error_msg}\n\n"
                            "It may due to:\n"
-                           "- Lost of connection to the equipment\n"
+                           "- Lost of connection with the equipment\n"
                            "- Incorrect sequence setting")
+
+            # Set DC Parameter sequencing
 
     def read_table(self):
         self.columnCount = self.tableWidget.columnCount()                   # Inclusive of column used for description
@@ -411,7 +421,7 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         error = False
 
         for column in range(1, self.columnCount):
-            row_item = []
+            row_item = [column]
             for row in range(self.rowCount):
                 setting = self.tableWidget.item(row, column)
                 if setting:
@@ -427,6 +437,7 @@ class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         return error, self.sequence_setting, self.columnCount
 
 
+# Add Edit Sequential Voltage UI
 class AddEdit_Seq(QMainWindow, SEQ_AddEdit_UI.Ui_AddEdit_SEQ):
     def __init__(self, parent, step_selected, selected_equipment, previous_setting):
         super(AddEdit_Seq, self).__init__(parent)
