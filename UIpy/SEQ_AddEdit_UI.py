@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'UI\02_AddEdit_SEQ.ui'
+# Form implementation generated from reading ui file 'UI\03_SEQ_AddEdit.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.2
 #

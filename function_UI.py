@@ -58,7 +58,7 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Switch to sequential console mode
     def goto_seq_console_mode(self):
         self.close()
-        self.seq_console_mode = Prog_Console_UI(self.selected_equipment)
+        self.seq_console_mode = Set_Prog_Console_UI(self.selected_equipment)
         self.seq_console_mode.show()
 
     # Add connected equipment to the list
@@ -259,7 +259,7 @@ class FV_Console_UI(QMainWindow, CV_Console_UI.Ui_MainWindow):
 
 
 # Sequential Voltage UI
-class Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
+class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
         self.setupUi(self)
