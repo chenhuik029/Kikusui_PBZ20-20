@@ -175,6 +175,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(12)
         self.doubleSpinBox_OV.setFont(font)
+        self.doubleSpinBox_OV.setMinimum(0.0)
         self.doubleSpinBox_OV.setMaximum(0.99)
         self.doubleSpinBox_OV.setSingleStep(0.01)
         self.doubleSpinBox_OV.setObjectName("doubleSpinBox_OV")
