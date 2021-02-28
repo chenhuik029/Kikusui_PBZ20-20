@@ -138,9 +138,31 @@ class Kikusui_PyVisa(Basic_PyVisa):
             error_msg = ""
 
             return True, error_msg
+
         except:
             print(f"Set AC parameter sequencing Error!")
             error_msg = f"Set AC parameter sequencing Error!"
+            return False, error_msg
+
+    def run_select_seq(self, SEQ_NUMBER):
+        try:
+            self.inst.write(f'PROG:NAME {SEQ_NUMBER}')
+            self.inst.write(f'PROG:EXEC:STAT RUN')
+            error_msg = ""
+            return True, error_msg
+
+        except:
+            print(f"Run Sequence {SEQ_NUMBER} Error")
+            error_msg = f"Run Sequence {SEQ_NUMBER} Error"
+            return False, error_msg
+
+    def seq_status_query(self):
+        try:
+            status = self.inst(f'PROG:EXEC?')
+            return True, status
+
+        except:
+            error_msg = f"Query for status FAIL"
             return False, error_msg
 
 
@@ -168,12 +190,12 @@ class Kikusui_features:
     def set_sequence_output(self, seq_definition_setting, sequence_setting):
 
         # First - Set Store sequence Definition
-        status_set_def, error_msg_def = self.kikusui.set_store_seq_definition(seq_definition_setting[0],
-                                                               seq_definition_setting[1],
+        status_set_def, error_msg_def = self.kikusui.set_store_seq_definition(seq_definition_setting[1],
+                                                               seq_definition_setting[5],
+                                                               seq_definition_setting[0],
                                                                seq_definition_setting[2],
                                                                seq_definition_setting[3],
-                                                               seq_definition_setting[4],
-                                                               seq_definition_setting[5])
+                                                               seq_definition_setting[4])
 
         if status_set_def:
 
@@ -235,6 +257,15 @@ class Kikusui_features:
 
     def clear_error(self):
         self.kikusui.clear_error()
+
+    def run_sequence_output(self, sequence_number):
+
+        status_run_seq, error_msg_run = self.kikusui.run_select_seq(sequence_number)
+        return status_run_seq, error_msg_run
+
+    def run_sequence_query(self):
+        read_status, query_stat = self.kikusui.seq_status_query()
+        return read_status, query_stat
 
 
 if __name__ == "__main__":

@@ -263,7 +263,7 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
     def __init__(self, selected_equipment):
         super().__init__()
         self.setupUi(self)
-        self.pushButton_RunSequence.setDisabled(True)
+        self.read_thread = Thread(target=self.read_output)
         self.pushButton_StoreSequency.setDisabled(True)
         self.pushButton_AddEditSeq.setDisabled(True)
         self.pushButton_DelStep.setDisabled(True)
@@ -292,8 +292,10 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         self.pushButton_AddEditSeq.clicked.connect(self.add_edit_step)
         self.pushButton_DelStep.clicked.connect(self.delete_step)
         self.pushButton_StoreSequency.clicked.connect(self.store_sequence)
+        self.pushButton_RunSequence.clicked.connect(self.run_sequence)
 
         # Define Variable
+        self.read_output_stat = False
         self.selected_equipment = selected_equipment
         self.table_created = False
         self.steps = 0
@@ -318,7 +320,6 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         self.steps = int(self.spinBox_steps.text())
 
         if int(self.steps) > 0:
-            self.pushButton_RunSequence.setDisabled(False)
             self.pushButton_StoreSequency.setDisabled(False)
             self.pushButton_AddEditSeq.setDisabled(False)
             self.pushButton_DelStep.setDisabled(False)
@@ -336,7 +337,6 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
                                    "Press 'OK' to clear the table.\n"
                                    "Press 'Cancel' to cancel the action.")
         if status:
-            self.pushButton_RunSequence.setDisabled(True)
             self.pushButton_StoreSequency.setDisabled(True)
             self.pushButton_AddEditSeq.setDisabled(True)
             self.pushButton_DelStep.setDisabled(True)
@@ -394,7 +394,7 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
             seq_polarity = self.comboBox_polarity.currentText()
             seq_mode = self.comboBox_mode.currentText()
             seq_iteration = self.spinBox_iteration.text()
-            seq_steps = step_count
+            seq_steps = str(step_count - 1)
 
             if self.lineEdit_prog_title.text() == "":
                 seq_name = f'Sequence_{seq_no}'
@@ -435,6 +435,43 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
                 self.sequence_setting.append(row_item)
 
         return error, self.sequence_setting, self.columnCount
+
+    def run_sequence(self):
+        # Get user input
+        seq_no = self.spinBox_prog_no.text()
+
+        # Enable read output and display
+        self.read_thread = Thread(target=self.read_output)
+
+        # Query for status of Equipment (is  running or not)
+        run_status, data_query = self.instrument.run_sequence_query()
+
+        if run_status:
+            print(data_query)
+            # To be continue once check the data_query data
+            # # Set Sequence Number to execute
+            # status, error_msg = self.instrument.run_sequence_output(seq_no)
+            #
+            # if not status:
+            #     msg_box_ok(f"{error_msg}\n\n"
+            #                "It may due to:\n"
+            #                "- Lost of connection with the equipment\n")
+            # else:
+            #     self.read_thread.start()
+            #     self.read_output_stat = True
+
+        else:
+            msg_box_ok(f"{data_query}\n\n"
+                       "It may due to:\n"
+                       "- Lost of connection with the equipment\n")
+
+    def read_output(self):
+        while self.read_output_stat:
+            self.vout_read = self.instrument.read_output_supply()[0]
+            self.iout_read = self.instrument.read_output_supply()[1]
+            self.lcdNumber_Voltage.display(f'{self.vout_read}')
+            self.lcdNumber_Current.display(f'{self.iout_read}')
+            # time.sleep(0.3)
 
 
 # Add Edit Sequential Voltage UI
