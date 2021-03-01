@@ -85,9 +85,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Scan connected equipment
     def scan_equipment_list(self):
-        # self.equipment_list = self.list_instrument.list_connected_devices()
+        self.equipment_list = self.list_instrument.list_connected_devices()
         # To be deleted when actual instrument was used.
-        self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
+        # self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
 
     # Check selected equipment
     def check_selected_equipment(self):
@@ -440,6 +440,9 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         # Get user input
         seq_no = self.spinBox_prog_no.text()
 
+        # Connect the equipment
+        self.instrument.connect_equipment(self.selected_equipment)
+
         # Enable read output and display
         self.read_thread = Thread(target=self.read_output)
 
@@ -447,18 +450,22 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
         run_status, data_query = self.instrument.run_sequence_query()
 
         if run_status:
-            print(data_query)
-            # To be continue once check the data_query data
-            # # Set Sequence Number to execute
-            # status, error_msg = self.instrument.run_sequence_output(seq_no)
-            #
-            # if not status:
-            #     msg_box_ok(f"{error_msg}\n\n"
-            #                "It may due to:\n"
-            #                "- Lost of connection with the equipment\n")
-            # else:
-            #     self.read_thread.start()
-            #     self.read_output_stat = True
+            status_run_sequence = data_query.split(",", 4)[0]
+            if status_run_sequence == "STOP":
+                # Set Sequence Number to execute
+                status, error_msg = self.instrument.run_sequence_output(seq_no)
+                if not status:
+                    msg_box_ok(f"{error_msg}\n\n"
+                               "It may due to:\n"
+                               "- Lost of connection with the equipment\n")
+                else:
+                    self.read_thread.start()
+                    self.read_output_stat = True
+
+            else:
+                msg_box_ok("Error:\n\n"
+                           "On-going Sequence is running.\n "
+                           "Unable to start a new one!!")
 
         else:
             msg_box_ok(f"{data_query}\n\n"
@@ -466,12 +473,20 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
                        "- Lost of connection with the equipment\n")
 
     def read_output(self):
+        # Time delay for equipment to turn on first
+        time.sleep(0.5)
         while self.read_output_stat:
+            run_status, data_query = self.instrument.run_sequence_query()
+            seq_run_status = data_query.split(",", 4)[0]
+
+            if seq_run_status == "STOP":
+                self.read_output_stat = False
+
             self.vout_read = self.instrument.read_output_supply()[0]
             self.iout_read = self.instrument.read_output_supply()[1]
             self.lcdNumber_Voltage.display(f'{self.vout_read}')
             self.lcdNumber_Current.display(f'{self.iout_read}')
-            # time.sleep(0.3)
+        self.instrument.on_off_equipment(0)
 
 
 # Add Edit Sequential Voltage UI

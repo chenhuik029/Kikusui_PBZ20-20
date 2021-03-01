@@ -158,7 +158,8 @@ class Kikusui_PyVisa(Basic_PyVisa):
 
     def seq_status_query(self):
         try:
-            status = self.inst(f'PROG:EXEC?')
+            self.inst.write(f'PROG:EXEC?')
+            status = self.inst.read()
             return True, status
 
         except:
