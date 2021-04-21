@@ -7,7 +7,13 @@ class Basic_PyVisa:
         self.rm = pyvisa.ResourceManager()
 
     def list_connected_devices(self):
-        return self.rm.list_resources()
+        try:
+            resource_list = self.rm.list_resources()
+
+        except:
+            resource_list = ""
+
+        return resource_list
 
     def connect_device(self, target_resource_instr):
         try:
