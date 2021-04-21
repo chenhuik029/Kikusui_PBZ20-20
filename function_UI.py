@@ -1,8 +1,8 @@
-from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtWidgets import QMainWindow, QLineEdit, QApplication, QDesktopWidget
 from PyQt5 import QtWidgets, QtCore, QtGui
 from UIpy import Main_UI, CV_Console_UI, SEQ_Console_UI, SEQ_AddEdit_UI
-from function_msgbox import msg_box_ok, msg_box_auto_close, msg_box_ok_cancel
+from function_msgbox import msg_box_ok, msg_box_auto_close, msg_box_ok_cancel, about_show
 from Instrument_PyVisa import Kikusui_PyVisa
 from pyqt_led import Led
 import sys
@@ -39,11 +39,15 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
         self.pushButton_refresh.clicked.connect(self.combobox_equipment_list)
         self.pushButton_Connect.clicked.connect(self.connect_equipment)
         self.comboBox_list_instrument.currentIndexChanged.connect(self.check_selected_equipment)
+        self.actionAbout.triggered.connect(self.about)
 
         # Variables
         self.equipment_list = []
         self.selected_equipment = ""
         self.active_session = False
+
+    def about(self):
+        about_show()
 
     def close_app(self):
         msg_box_auto_close("Closing Program")
@@ -101,8 +105,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
     # Connect to selected equipment
     def connect_equipment(self):
         self.selected_equipment = self.comboBox_list_instrument.currentText()
-        # status = True
         status = self.instrument.connect_equipment(self.selected_equipment)
+        # status = True
+
         if status is False:
             msg_box_ok(f'ERROR 001:\n\n{self.selected_equipment} is busy\n'
                        f'OR not available\n'
@@ -508,19 +513,20 @@ class AddEdit_Seq(QMainWindow, SEQ_AddEdit_UI.Ui_AddEdit_SEQ):
         self.Apply.clicked.connect(self.apply)
 
     def setting_preset(self):
-        self.onlyInt = QIntValidator()
-        self.StepTime.setValidator(self.onlyInt)
-        self.StepDCV.setValidator(self.onlyInt)
-        self.DCRamp_StartLvl.setValidator(self.onlyInt)
-        self.DCRamp_StopLvl.setValidator(self.onlyInt)
-        self.ACSprImp_Vpp.setValidator(self.onlyInt)
-        self.ACSprImp_Freq.setValidator(self.onlyInt)
-        self.ACSprImp_Phase.setValidator(self.onlyInt)
-        self.ACSprImp_DutyCycle.setValidator(self.onlyInt)
-        self.ACSwpAmp_Start_Vpp.setValidator(self.onlyInt)
-        self.ACSwpAmp_Stop_Vpp.setValidator(self.onlyInt)
-        self.ACFreqSwp_StartFreq.setValidator(self.onlyInt)
-        self.ACFreqSwp_StopFreq.setValidator(self.onlyInt)
+        self.onlyfloat = QDoubleValidator()
+        # self.onlyInt = QIntValidator()
+        self.StepTime.setValidator(self.onlyfloat)
+        self.StepDCV.setValidator(self.onlyfloat)
+        self.DCRamp_StartLvl.setValidator(self.onlyfloat)
+        self.DCRamp_StopLvl.setValidator(self.onlyfloat)
+        self.ACSprImp_Vpp.setValidator(self.onlyfloat)
+        self.ACSprImp_Freq.setValidator(self.onlyfloat)
+        self.ACSprImp_Phase.setValidator(self.onlyfloat)
+        self.ACSprImp_DutyCycle.setValidator(self.onlyfloat)
+        self.ACSwpAmp_Start_Vpp.setValidator(self.onlyfloat)
+        self.ACSwpAmp_Stop_Vpp.setValidator(self.onlyfloat)
+        self.ACFreqSwp_StartFreq.setValidator(self.onlyfloat)
+        self.ACFreqSwp_StopFreq.setValidator(self.onlyfloat)
         self.StepOut_ONOFF.addItems(["ON", "OFF"])
         self.DCRamp_ONOFF.addItems(["OFF", "ON"])
         self.TrigIn_ONOFF.addItems(["OFF", "ON"])

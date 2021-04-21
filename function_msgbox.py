@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QDateTime
-from PyQt5 import QtCore
-from UIpy import MsgBoxOk, MsgBoxOkCancel, NewEntry_dialog, NewDropList_dialog, MsgBoxAutoClose, NewCalender_dialog
+from PyQt5 import QtCore, uic
+from UIpy import MsgBoxOk, MsgBoxOkCancel, NewEntry_dialog, NewDropList_dialog, MsgBoxAutoClose, NewCalender_dialog, about
 
 
 class MsgBoxAutoClose_UI(QDialog, MsgBoxAutoClose.Ui_msgboxautoclose):
@@ -56,6 +56,17 @@ class NewCalender_UI(QDialog, NewCalender_dialog.Ui_new_droplist_dialog):
         self.setupUi(self)
 
 
+class about_UI(QDialog, about.Ui_Dialog_help):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.label_email.setText("<a href='mailto:chenhui_k029@hotmail.com?"
+                                 "subject=Support for Kikusui PBZ-2020 control interface&"
+                                 "body=Hi support, \nI would like to seek for help on ..\n'"
+                                 ">Click here to sent an email for support regarding the control interface.")
+        self.label_email.setOpenExternalLinks(True)
+
+
 def msg_box_ok(input_text=None):
     print_try = MsgBoxOK_UI()
     print_try.msgbox_ok_set_text(input_text)
@@ -106,3 +117,8 @@ def new_calender_get_date():
         return clicked_ok_cancel, new_get_date.calendarWidget.selectedDate().toPyDate()
     else:
         return clicked_ok_cancel, ""
+
+
+def about_show():
+    about_help = about_UI()
+    about_help.exec_()

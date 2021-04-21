@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="pic">
+    <file>kikusui_picture.jpg</file>
+  </qresource>
+</RCC>
