@@ -80,13 +80,13 @@ class Kikusui_PyVisa(Basic_PyVisa):
 
     def set_store_seq_definition(self, SEQ_NUMBER, SEQ_STEPS, SEQ_NAME, SEQ_POLARITY, SEQ_MODE, SEQ_LOOP):
         try:
-            self.inst.write(f'PROG:NAME {SEQ_NUMBER}')
+            self.inst.write(f'PROG:NAME "{SEQ_NUMBER}"')
             self.inst.write(f'PROG:EDIT:DEL')
             self.inst.write(f'PROG:EDIT:ADD {SEQ_STEPS}')
             self.inst.write(f'PROG:EDIT:TITL "{SEQ_NAME}"')
             self.inst.write(f'PROG:EDIT:FUNC:POL {SEQ_POLARITY}')
             self.inst.write(f'PROG:EDIT:FUNC:MODE {SEQ_MODE}')
-            self.inst.write(f'PROG:EDIT:FUNC:LOOP {SEQ_LOOP}')
+            self.inst.write(f'PROG:EDIT:LOOP {SEQ_LOOP}')
             error_msg = ""
             return True, error_msg
         except:
