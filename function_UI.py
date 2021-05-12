@@ -89,9 +89,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Scan connected equipment
     def scan_equipment_list(self):
-        # self.equipment_list = self.list_instrument.list_connected_devices()
+        self.equipment_list = self.list_instrument.list_connected_devices()
         # To be deleted when actual instrument was used.
-        self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
+        # self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
 
     # Check selected equipment
     def check_selected_equipment(self):
