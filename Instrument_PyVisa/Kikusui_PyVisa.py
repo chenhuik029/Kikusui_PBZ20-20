@@ -166,6 +166,17 @@ class Kikusui_PyVisa(Basic_PyVisa):
             error_msg = f"Query for status FAIL"
             return False, error_msg
 
+    def seq_polarity_query(self, SEQ_NUMBER):
+        try:
+            self.inst.write(f'PROG:NAME {SEQ_NUMBER}')
+            self.inst.write(f'PROG:EDIT:FUNC:POL?')
+            status = self.inst.read()
+            return True, status
+
+        except:
+            error_msg = f"Query for polarity FAIL"
+            return False, error_msg
+
 
 class Kikusui_features:
     def __init__(self):
@@ -260,7 +271,13 @@ class Kikusui_features:
         self.kikusui.clear_error()
 
     def run_sequence_output(self, sequence_number):
+        # Set protection configuration of the equipment before executing sequence
+        status_que_pol, que_polarity = self.kikusui.seq_polarity_query(sequence_number)
+        self.kikusui.set_polarity(que_polarity)
+        self.kikusui.set_current_limit()
+        self.kikusui.set_voltage_limit()
 
+        # Executing sequence
         status_run_seq, error_msg_run = self.kikusui.run_select_seq(sequence_number)
         return status_run_seq, error_msg_run
 

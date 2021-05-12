@@ -89,9 +89,9 @@ class MainUI(QMainWindow, Main_UI.Ui_MainUI):
 
     # Scan connected equipment
     def scan_equipment_list(self):
-        self.equipment_list = self.list_instrument.list_connected_devices()
+        # self.equipment_list = self.list_instrument.list_connected_devices()
         # To be deleted when actual instrument was used.
-        # self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
+        self.equipment_list = ('USB0::0x0B3E::0x1012::XF001773::0::INSTR', 'ASRL4::INSTR', 'ASRL8::INSTR')
 
     # Check selected equipment
     def check_selected_equipment(self):
@@ -456,9 +456,11 @@ class Set_Prog_Console_UI(QMainWindow, SEQ_Console_UI.Ui_MainWindow):
 
         if run_status:
             status_run_sequence = data_query.split(",", 4)[0]
+
             if status_run_sequence == "STOP":
                 # Set Sequence Number to execute
                 status, error_msg = self.instrument.run_sequence_output(seq_no)
+
                 if not status:
                     msg_box_ok(f"{error_msg}\n\n"
                                "It may due to:\n"
